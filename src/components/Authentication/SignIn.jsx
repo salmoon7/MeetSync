@@ -51,6 +51,10 @@ const SignIn = () => {
     }
   };
 
+  const handleForgotPassword = () => {
+    navigate("/forgot-password");
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
       <div className="lg:w-2/5 w-full h-64 lg:h-auto bg-gray-200 flex items-center justify-center">
@@ -66,6 +70,13 @@ const SignIn = () => {
           <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">
             Sign In
           </h2>
+
+          {/* Catchy Note */}
+          <p className="text-center text-gray-500 mb-6">
+            "Connect with your team effortlessly. Sign in to MeetSync and start
+            your video conference in seconds!"
+          </p>
+
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block text-sm font-bold mb-2" htmlFor="email">
@@ -96,6 +107,18 @@ const SignIn = () => {
                 required
               />
             </div>
+
+            {/* Forgot Password Link */}
+            <div className="flex justify-end mb-4">
+              <button
+                type="button"
+                className="text-sm text-blue-500 hover:underline focus:outline-none"
+                onClick={handleForgotPassword}
+              >
+                Forgot Password?
+              </button>
+            </div>
+
             <button
               type="submit"
               className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
