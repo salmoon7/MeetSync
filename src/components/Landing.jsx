@@ -1,118 +1,170 @@
 import React, { useState } from "react";
-import { FaVideo, FaCalendarAlt, FaLink } from "react-icons/fa";
+import { FaVideo, FaCalendarAlt, FaLink, FaCopy } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import Calendar from "react-calendar";
-import CallHeader from "./Header/Header";
 import "react-calendar/dist/Calendar.css";
 import Header from "./Header/Header";
+import axios from "axios";
 
 const Landing = () => {
   const navigate = useNavigate();
-  const [meetingId, setMeetingId] = useState("");
+  const [meetingLink, setMeetingLink] = useState("");
+  const [showMeetingLink, setShowMeetingLink] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  const [meetingLink, setMeetingLink] = useState("");
-
-  // Fetch user data from localStorage
-  const user = JSON.parse(localStorage.getItem("user")); // Adjust this line if you're using a different method for user state
-
-  const handleJoin = (e) => {
-    e.preventDefault(); // Prevent the default link behavior
-
-    // Check if the user is signed in
+  const handleJoin = async (e) => {
+    e.preventDefault();
     if (!user) {
       alert("You need to be signed in to join a meeting.");
-      navigate("/signin"); // Redirect to the sign-in page
+      navigate("/signin");
       return;
     }
 
-    // Extract meeting ID from the link
-    const meetingIdMatch = meetingLink.match(/\/video-call\/([a-zA-Z0-9]+)/);
-    if (meetingIdMatch) {
-      const meetingId = meetingIdMatch[1];
-
-      // Navigate to the video call component with the meeting ID
+    try {
+      const meetingId = meetingLink.split("/").pop();
+      const response = await axios.post(
+        "https://chat-and-video.onrender.com/api/meeting/join",
+        {
+          meetingId,
+          userId: user.id,
+        }
+      );
+      setMessage(response.data.message);
       navigate(`/video-call/${meetingId}`);
-    } else {
-      alert("Please enter a valid meeting link.");
+    } catch (err) {
+      setError("Error joining the meeting. Please try again.");
+      console.error(err);
     }
   };
 
-  const generateMeetingId = () => {
-    return Math.random().toString(36).substring(2, 15);
+  const createMeeting = async () => {
+    try {
+      const response = await fetch(
+        "https://chat-and-video.onrender.com/api/meeting/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: user.id }),
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setMeetingLink(data.meetingLink);
+        setShowMeetingLink(true);
+      } else {
+        throw new Error("Failed to create meeting");
+      }
+    } catch (error) {
+      console.error("Error creating meeting:", error);
+    }
   };
 
-  // Function to handle starting an instant meeting
-  const handleStartInstantMeeting = () => {
-    const newMeetingId = generateMeetingId();
-    setMeetingId(newMeetingId);
-    navigate(`/signin?meetingId=${newMeetingId}`);
+  const handleStartInstantMeeting = async () => {
+    const newMeetingLink = await createMeeting();
+    if (newMeetingLink) {
+      navigate(newMeetingLink);
+    }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(meetingLink).then(() => {
+      alert("Meeting link copied to clipboard");
+    });
   };
 
   return (
     <>
-      <Header />
-      <div>
-        <div className="bg-gray-50 min-h-screen flex flex-col items-center pt-20 px-6 md:px-12">
-          {/* Hero Section */}
-          <div className="text-center max-w-2xl mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Video call and meet with everyone.
-            </h1>
-            <p className="text-lg text-gray-600">
-              Collaborate and celebrate from anywhere with MeetSync. Create
-              secure video calls that can easily be joined by anyone.
-            </p>
-          </div>
+      <main className="bg-gradient-to-b from-gray-50 to-white min-h-screen pt-24 px-6 md:px-12">
+        {/* Hero */}
+        <section className="max-w-3xl mx-auto text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Video call and meet with everyone.
+          </h1>
+          <p className="text-lg text-gray-600">
+            Collaborate and celebrate from anywhere with MeetSync. Create secure
+            video calls that are easy to join.
+          </p>
+        </section>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 w-full max-w-md">
-            {/* New Meeting Button (Unchanged, triggers meeting options) */}
+        {/* Join or Create Meeting */}
+        <section className="max-w-xl mx-auto space-y-6">
+          {/* New Meeting */}
+          <button
+            onClick={() => setShowOptions(!showOptions)}
+            className="flex items-center justify-center w-full bg-blue-900 text-white font-semibold rounded-xl px-6 py-3 hover:bg-blue-800 transition-all"
+          >
+            <FaVideo className="mr-3" /> New Meeting
+          </button>
+
+          {/* Input for Join */}
+          <form
+            onSubmit={handleJoin}
+            className="flex items-center bg-white shadow-sm border border-gray-200 rounded-xl px-4 py-3"
+          >
+            <FaLink className="mr-3 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Enter a code or link"
+              className="flex-grow outline-none text-gray-700"
+              value={meetingLink}
+              onChange={(e) => setMeetingLink(e.target.value)}
+            />
             <button
-              onClick={() => setShowOptions(!showOptions)}
-              className="flex items-center justify-center w-full md:w-auto bg-blue-900 text-white rounded-full px-6 py-3 shadow-lg hover:bg-blue-800 transition duration-300"
+              type="submit"
+              className="ml-3 text-blue-900 font-medium hover:underline"
             >
-              <FaVideo className="mr-3" /> New Meeting
+              Join
             </button>
+          </form>
 
-            {/* Enter Code or Link Input */}
-            <div className="flex items-center border border-gray-300 rounded-full px-4 py-3 shadow-sm w-full md:w-auto">
-              <FaLink className="mr-3 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Enter a code or link"
-                className="outline-none flex-grow text-gray-700"
-                value={meetingLink}
-                onChange={(e) => setMeetingLink(e.target.value)} // Update state on input change
-              />
-              <button
-                onClick={handleJoin} // Handle click to join
-                className="ml-3 text-blue-900 font-semibold hover:underline"
-              >
-                Join
-              </button>
+          {/* Show Meeting Link */}
+          {showMeetingLink && (
+            <div className="bg-white p-4 rounded-xl shadow-md">
+              <p className="text-sm text-gray-700 mb-2">
+                Share this link to invite others:
+              </p>
+              <div className="flex items-center space-x-3">
+                <input
+                  type="text"
+                  readOnly
+                  value={meetingLink}
+                  className="flex-grow bg-gray-100 px-3 py-2 rounded-md text-sm"
+                />
+                <button
+                  onClick={handleCopyLink}
+                  className="flex items-center text-blue-900 font-medium hover:underline"
+                >
+                  <FaCopy className="mr-2" />
+                  Copy
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Divider */}
-          <hr className="my-10 w-full max-w-4xl border-gray-200" />
+          {message && <p className="text-green-600">{message}</p>}
+          {error && <p className="text-red-600">{error}</p>}
+        </section>
 
-          {/* Learn More Section */}
-          <div className="text-center text-gray-500">
-            <p className="hover:underline cursor-pointer">
-              Learn more about MeetSync
-            </p>
-          </div>
-        </div>
+        <hr className="my-14 max-w-4xl mx-auto border-gray-200" />
 
-        {/* Meeting Options (Visible on New Meeting button click) */}
+        {/* Learn More */}
+        <p className="text-center text-gray-500 hover:underline cursor-pointer">
+          Learn more about MeetSync
+        </p>
+
+        {/* Modal Options */}
         {showOptions && (
-          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-lg px-6 py-4 w-11/12 md:w-auto max-w-lg">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">
+          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white shadow-xl rounded-xl p-6 w-[90%] md:w-[400px] z-50">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               New Meeting Options
             </h3>
-            <div className="flex flex-col space-y-3">
+            <div className="space-y-4">
               <Link
                 to="/signin"
                 className="flex items-center text-gray-700 hover:underline"
@@ -128,16 +180,18 @@ const Landing = () => {
                 Start an instant meeting
               </button>
               <div className="text-gray-700">
-                <FaCalendarAlt className="mr-3 text-blue-900" />
-                <span>Schedule a meeting</span>
+                <div className="flex items-center mb-2">
+                  <FaCalendarAlt className="mr-3 text-blue-900" />
+                  <span>Schedule a meeting</span>
+                </div>
                 <Calendar
                   onChange={setSelectedDate}
                   value={selectedDate}
-                  className="mt-2"
+                  className="mt-2 rounded-md border border-gray-200"
                 />
                 <Link
                   to="/signin"
-                  className="mt-3 bg-blue-900 text-white px-3 py-1 rounded hover:bg-blue-800"
+                  className="mt-4 inline-block bg-blue-900 text-white px-4 py-2 rounded-md hover:bg-blue-800"
                 >
                   Confirm Schedule
                 </Link>
@@ -145,7 +199,7 @@ const Landing = () => {
             </div>
           </div>
         )}
-      </div>
+      </main>
     </>
   );
 };

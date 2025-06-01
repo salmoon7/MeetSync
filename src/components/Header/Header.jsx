@@ -30,19 +30,19 @@ const Header = () => {
             Home
           </a>
           <a
-            href="#"
+            href="/features"
             className="text-gray-600 hover:text-blue-900 transition duration-300"
           >
             Features
           </a>
           <a
-            href="#"
+            href="/pricing"
             className="text-gray-600 hover:text-blue-900 transition duration-300"
           >
             Pricing
           </a>
           <a
-            href="#"
+            href="#contact"
             className="text-gray-600 hover:text-blue-900 transition duration-300"
           >
             Contact

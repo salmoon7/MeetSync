@@ -24,20 +24,20 @@ const SignIn = () => {
         }
       );
 
-      const result = await response.json(); // Parse the response
+      const result = await response.json();
+      console.log(result);
 
       if (response.ok) {
-        // Store user object and token in localStorage
+        console.log(result);
         localStorage.setItem("user", JSON.stringify(result.user));
         console.log(JSON.stringify(result.user)); // Store the user object
         localStorage.setItem("token", result.token); // Store the token
         setLoading(false); // Stop loading
 
         // Generate a random meeting ID
-        const meetingId = Math.random().toString(36).substring(2, 15);
 
         // Navigate to the video call component, passing the meetingId as a query parameter
-        navigate(`/video-call/${meetingId}`, {
+        navigate(`/dashboard`, {
           state: { user: result.user },
         });
       } else {

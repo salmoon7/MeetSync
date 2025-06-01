@@ -28,9 +28,11 @@ const SignUp = () => {
       );
 
       const result = await response.json();
+      console.log(result);
       setLoading(false); // Stop loading when the request is done
 
       if (response.ok) {
+        console.log(result);
         alert(result.message); // Show success message
         window.location.href = "/signin"; // Redirect to login page
       } else {
